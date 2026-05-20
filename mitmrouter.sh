@@ -17,9 +17,9 @@ LAN_DNS_SERVER="1.1.1.1"
 DNSMASQ_CONF="tmp_dnsmasq.conf"
 HOSTAPD_CONF="tmp_hostapd.conf"
 
-if [ "$1" != "up" ] && [ "$1" != "down" ] || [ $# != 1 ]; then
+if [ "$1" != "up" ] && [ "$1" != "down" ] && [ "$1" != "refresh" ] || [ $# != 1 ]; then
     echo "missing required argument"
-    echo "$0: <up/down>"
+    echo "$0: <up/down/refresh>"
     exit
 fi
 
@@ -30,16 +30,18 @@ echo "== stop router services"
 sudo killall wpa_supplicant
 sudo killall dnsmasq
 
-echo "== reset all network interfaces"
-sudo ifconfig $LAN_IFACE 0.0.0.0
-sudo ifconfig $LAN_IFACE down
-sudo ifconfig $BR_IFACE 0.0.0.0
-sudo ifconfig $BR_IFACE down
-sudo ifconfig $WIFI_IFACE 0.0.0.0
-sudo ifconfig $WIFI_IFACE down
-sudo brctl delbr $BR_IFACE
+if [ $1 != "refresh" ]; then
+    echo "== reset all network interfaces"
+    sudo ifconfig $LAN_IFACE 0.0.0.0
+    sudo ifconfig $LAN_IFACE down
+    sudo ifconfig $BR_IFACE 0.0.0.0
+    sudo ifconfig $BR_IFACE down
+    sudo ifconfig $WIFI_IFACE 0.0.0.0
+    sudo ifconfig $WIFI_IFACE down
+    sudo brctl delbr $BR_IFACE
+fi
 
-if [ $1 = "up" ]; then
+if [ $1 = "up" ] || [ $1 = "refresh" ]; then
 
     echo "== create dnsmasq config file"
     echo "interface=${BR_IFACE}" > $DNSMASQ_CONF
@@ -60,14 +62,21 @@ if [ $1 = "up" ]; then
     echo "ieee80211n=1" >> $HOSTAPD_CONF
     #echo "ieee80211w=1" >> $HOSTAPD_CONF # PMF
     
-    echo "== bring up interfaces and bridge"
-    sudo ifconfig $WIFI_IFACE up
-    sudo ifconfig $WAN_IFACE up
-    sudo ifconfig $LAN_IFACE up
-    sudo brctl addbr $BR_IFACE
-    sudo brctl addif $BR_IFACE $LAN_IFACE
-    sudo ifconfig $BR_IFACE up
-    
+    if [ $1 != "refresh" ]; then
+        echo "== bring up interfaces and bridge"
+        sudo ifconfig $WIFI_IFACE up
+        sudo ifconfig $WAN_IFACE up
+        sudo ifconfig $LAN_IFACE up
+        sudo brctl addbr $BR_IFACE
+        sudo brctl addif $BR_IFACE $LAN_IFACE
+        sudo ifconfig $BR_IFACE up
+    fi
+
+    echo "== ensure bridge netfilter module is loaded"
+    sudo modprobe br_netfilter
+    sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
+    sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+
     echo "== setup iptables"
     sudo iptables --flush
     sudo iptables -t nat --flush
