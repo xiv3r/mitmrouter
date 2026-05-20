@@ -9,6 +9,8 @@ Bash script to automate setup of Linux router useful for IoT device traffic anal
 - dnsmasq
 - iproute2
     - provides `ip` (preinstalled on every modern Linux distro)
+- nftables
+    - provides `nft` (preinstalled on most modern Linux distros)
 
 ## Usage
 

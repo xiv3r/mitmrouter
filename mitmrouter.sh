@@ -91,14 +91,26 @@ EOF
         sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
         sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=1
 
-        echo "== setup iptables"
-        sudo iptables --flush
-        sudo iptables -t nat --flush
-        sudo iptables -t nat -A POSTROUTING -o "$WAN_IFACE" -j MASQUERADE
-        sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-        sudo iptables -A FORWARD -i "$BR_IFACE" -o "$WAN_IFACE" -j ACCEPT
+        echo "== setup nftables ruleset"
+        sudo nft delete table inet mitmrouter 2>/dev/null || true
+        sudo nft -f - <<EOF
+table inet mitmrouter {
+    chain forward {
+        type filter hook forward priority filter; policy accept;
+        ct state related,established accept
+        iifname "$BR_IFACE" oifname "$WAN_IFACE" accept
+    }
+    chain prerouting {
+        type nat hook prerouting priority dstnat;
         # optional mitm rules
-        #sudo iptables -t nat -A PREROUTING -i "$BR_IFACE" -p tcp -d 1.2.3.4 --dport 443 -j REDIRECT --to-ports 8081
+        # iifname "$BR_IFACE" ip daddr 1.2.3.4 tcp dport 443 redirect to :8081
+    }
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+        oifname "$WAN_IFACE" masquerade
+    }
+}
+EOF
 
         echo "== setting static IP on bridge interface"
         sudo ip addr add "$LAN_IP/$LAN_PREFIX" dev "$BR_IFACE"
