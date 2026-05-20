@@ -3,14 +3,12 @@ Bash script to automate setup of Linux router useful for IoT device traffic anal
 
 ![Arch](./img/arch.jpg)
 
-## Dependancies
+## Dependencies
 
 - hostapd
 - dnsmasq
-- bridge-utils
-    - provides `brctl`
-- net-tools
-    - provides `ifconfig`
+- iproute2
+    - provides `ip` (preinstalled on every modern Linux distro)
 
 ## Usage
 
