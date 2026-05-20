@@ -65,15 +65,15 @@ EOF
 interface=${WIFI_IFACE}
 bridge=${BR_IFACE}
 ssid=${WIFI_SSID}
-country_code=US
-hw_mode=g
-channel=11
-wpa=2
+country_code=${WIFI_COUNTRY}
+hw_mode=${WIFI_HW_MODE}
+channel=${WIFI_CHANNEL}
+wpa=${WIFI_WPA}
 wpa_passphrase=${WIFI_PASSWORD}
-wpa_key_mgmt=WPA-PSK
-wpa_pairwise=CCMP
-ieee80211n=1
-#ieee80211w=1 # PMF
+wpa_key_mgmt=${WIFI_WPA_KEY_MGMT}
+wpa_pairwise=${WIFI_WPA_PAIRWISE}
+ieee80211n=${WIFI_IEEE80211N}
+ieee80211w=${WIFI_IEEE80211W}
 EOF
 
         if [ "$ACTION" != "refresh" ]; then
