@@ -1,19 +1,5 @@
 #!/bin/bash
 
-# VARIABLES
-BR_IFACE="br0"
-WAN_IFACE="eth0"
-LAN_IFACE="eth1"
-WIFI_IFACE="wlan0"
-WIFI_SSID="setec_astronomy"
-WIFI_PASSWORD="mypassword"
-
-LAN_IP="192.168.200.1"
-LAN_SUBNET="255.255.255.0"
-LAN_DHCP_START="192.168.200.10"
-LAN_DHCP_END="192.168.200.100"
-LAN_DNS_SERVER="1.1.1.1"
-
 DNSMASQ_CONF="tmp_dnsmasq.conf"
 HOSTAPD_CONF="tmp_hostapd.conf"
 
@@ -23,8 +9,20 @@ if [ "$1" != "up" ] && [ "$1" != "down" ] && [ "$1" != "refresh" ] || [ $# != 1 
     exit
 fi
 
-SCRIPT_RELATIVE_DIR=$(dirname "${BASH_SOURCE[0]}") 
+SCRIPT_RELATIVE_DIR=$(dirname "${BASH_SOURCE[0]}")
 cd $SCRIPT_RELATIVE_DIR
+
+CONFIG_FILE="mitmrouter.conf"
+if [ ! -f "$CONFIG_FILE" ]; then
+    if [ -f "${CONFIG_FILE}.example" ]; then
+        cp "${CONFIG_FILE}.example" "$CONFIG_FILE"
+        echo "created $CONFIG_FILE from example. edit it and re-run."
+        exit 1
+    fi
+    echo "missing $CONFIG_FILE and ${CONFIG_FILE}.example"
+    exit 1
+fi
+source "$CONFIG_FILE"
 
 echo "== stop router services"
 sudo killall wpa_supplicant

@@ -16,7 +16,7 @@ Bash script to automate setup of Linux router useful for IoT device traffic anal
 
 You may want to disable NetworkManager as it may fight for control of one or more of the network interfaces.
 
-Before running the script, you will need to edit the bash variables at the top of the script to use your machines interface names and other details you may want to change like the Wi-Fi network SSID and password.
+Before running the script, copy `mitmrouter.conf.example` to `mitmrouter.conf` and edit it to set your interface names, Wi-Fi SSID, password, and other details. If `mitmrouter.conf` is missing on first run, the script will auto-create it from the example and exit so you can edit it.
 
 ```
 ./mitmrouter.sh: <up/down>

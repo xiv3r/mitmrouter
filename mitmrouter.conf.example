@@ -1,0 +1,14 @@
+# mitmrouter configuration. Copy this file to mitmrouter.conf and edit for your environment.
+
+BR_IFACE="br0"
+WAN_IFACE="eth0"
+LAN_IFACE="eth1"
+WIFI_IFACE="wlan0"
+WIFI_SSID="setec_astronomy"
+WIFI_PASSWORD="mypassword"
+
+LAN_IP="192.168.200.1"
+LAN_SUBNET="255.255.255.0"
+LAN_DHCP_START="192.168.200.10"
+LAN_DHCP_END="192.168.200.100"
+LAN_DNS_SERVER="1.1.1.1"
