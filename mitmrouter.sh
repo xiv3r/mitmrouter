@@ -36,18 +36,29 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 source "$CONFIG_FILE"
 
+LAN_ENABLED="${LAN_ENABLED:-1}"
+WIFI_ENABLED="${WIFI_ENABLED:-1}"
+if [ "$LAN_ENABLED" != "1" ] && [ "$WIFI_ENABLED" != "1" ]; then
+    echo "both LAN_ENABLED and WIFI_ENABLED are 0 in $CONFIG_FILE; at least one must be 1"
+    exit 1
+fi
+
 echo "== stop router services"
 sudo pkill -x wpa_supplicant || true
 sudo pkill -x dnsmasq || true
 
 if [ "$ACTION" != "refresh" ]; then
     echo "== reset all network interfaces"
-    sudo ip addr flush dev "$LAN_IFACE" 2>/dev/null || true
-    sudo ip link set dev "$LAN_IFACE" down 2>/dev/null || true
+    if [ "$LAN_ENABLED" = "1" ]; then
+        sudo ip addr flush dev "$LAN_IFACE" 2>/dev/null || true
+        sudo ip link set dev "$LAN_IFACE" down 2>/dev/null || true
+    fi
     sudo ip addr flush dev "$BR_IFACE" 2>/dev/null || true
     sudo ip link set dev "$BR_IFACE" down 2>/dev/null || true
-    sudo ip addr flush dev "$WIFI_IFACE" 2>/dev/null || true
-    sudo ip link set dev "$WIFI_IFACE" down 2>/dev/null || true
+    if [ "$WIFI_ENABLED" = "1" ]; then
+        sudo ip addr flush dev "$WIFI_IFACE" 2>/dev/null || true
+        sudo ip link set dev "$WIFI_IFACE" down 2>/dev/null || true
+    fi
     sudo ip link delete "$BR_IFACE" type bridge 2>/dev/null || true
 fi
 
@@ -60,8 +71,9 @@ dhcp-range=${LAN_DHCP_START},${LAN_DHCP_END},${LAN_SUBNET},12h
 dhcp-option=6,${LAN_DNS_SERVER}
 EOF
 
-        echo "== create hostapd config file"
-        cat > "$HOSTAPD_CONF" <<EOF
+        if [ "$WIFI_ENABLED" = "1" ]; then
+            echo "== create hostapd config file"
+            cat > "$HOSTAPD_CONF" <<EOF
 interface=${WIFI_IFACE}
 bridge=${BR_IFACE}
 ssid=${WIFI_SSID}
@@ -75,14 +87,19 @@ wpa_pairwise=${WIFI_WPA_PAIRWISE}
 ieee80211n=${WIFI_IEEE80211N}
 ieee80211w=${WIFI_IEEE80211W}
 EOF
+        fi
 
         if [ "$ACTION" != "refresh" ]; then
             echo "== bring up interfaces and bridge"
-            sudo ip link set dev "$WIFI_IFACE" up
+            if [ "$WIFI_ENABLED" = "1" ]; then
+                sudo ip link set dev "$WIFI_IFACE" up
+            fi
             sudo ip link set dev "$WAN_IFACE" up
-            sudo ip link set dev "$LAN_IFACE" up
             sudo ip link add name "$BR_IFACE" type bridge
-            sudo ip link set dev "$LAN_IFACE" master "$BR_IFACE"
+            if [ "$LAN_ENABLED" = "1" ]; then
+                sudo ip link set dev "$LAN_IFACE" up
+                sudo ip link set dev "$LAN_IFACE" master "$BR_IFACE"
+            fi
             sudo ip link set dev "$BR_IFACE" up
         fi
 
@@ -118,7 +135,9 @@ EOF
         echo "== starting dnsmasq"
         sudo dnsmasq -C "$DNSMASQ_CONF"
 
-        echo "== starting hostapd"
-        sudo hostapd "$HOSTAPD_CONF"
+        if [ "$WIFI_ENABLED" = "1" ]; then
+            echo "== starting hostapd"
+            sudo hostapd "$HOSTAPD_CONF"
+        fi
         ;;
 esac

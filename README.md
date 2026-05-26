@@ -18,6 +18,8 @@ You may want to disable NetworkManager as it may fight for control of one or mor
 
 Before running the script, copy `mitmrouter.conf.example` to `mitmrouter.conf` and edit it to set your interface names, Wi-Fi SSID, password, and other details. If `mitmrouter.conf` is missing on first run, the script will auto-create it from the example and exit so you can edit it.
 
+`LAN_ENABLED` and `WIFI_ENABLED` (both default `"1"`) control whether the wired LAN interface and the Wi-Fi AP are brought into the bridge. Set either to `"0"` to run a Wi-Fi-only or wired-only LAN. At least one must be enabled — the script will refuse to start if both are `"0"`. When `WIFI_ENABLED="0"`, hostapd is not started and the corresponding interface name (`WIFI_IFACE`) is ignored; same for `LAN_ENABLED="0"` and `LAN_IFACE`.
+
 ```
 ./mitmrouter.sh <up|down|refresh>
 ```
